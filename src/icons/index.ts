@@ -59,6 +59,7 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { MdEdit } from "react-icons/md";
 import { MdDeleteForever } from "react-icons/md";
+import { FaEye } from "react-icons/fa";
 
 
 export {
@@ -122,4 +123,5 @@ export {
   MdOutlineModeEditOutline,
   MdEdit,
   MdDeleteForever,
+  FaEye,
 };

@@ -12,6 +12,8 @@ import {
 } from "../ui/table";
 import { MdDeleteForever, MdEdit } from "react-icons/md";
 import Badge from "../ui/badge/Badge";
+import { Link } from "react-router";
+import { FaEye } from "react-icons/fa";
 
 export default function User() {
   const itemsPerPage = 5;
@@ -154,12 +156,12 @@ export default function User() {
         </TableCell>
         <TableCell className="px-4 py-3 text-end text-theme-sm text-gray-500 dark:text-gray-400">
           <div className="flex justify-end gap-3">
-            <button
-              onClick={() => handleDeleteClick(user)}
-              className="text-blue-400 hover:text-blue-800"
+            <Link
+              to="/manage/user/detail"
+              className="text-sm text-blue-400 hover:text-blue-800"
             >
-              <MdEdit className="w-5 h-5" />
-            </button>
+              <FaEye className="w-5 h-5" />
+            </Link>
             <button
               onClick={() => handleDeleteClick(user)}
               className="text-red-400 hover:text-red-800"
@@ -329,7 +331,7 @@ export default function User() {
           onClick={() => alert("Create new resource clicked")}
           className="ml-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
-          + Create New
+          + Add
         </button>
       </div>
 

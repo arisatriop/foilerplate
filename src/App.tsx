@@ -23,6 +23,7 @@ import Menu from "./pages/Manage/Menu";
 import Role from "./pages/Manage/Role";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import UserDetailLayout from "./pages/Manage/UserDetailLayout";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
             <Route path="/manage/user" element={<User />} />
+            <Route path="/manage/user/detail" element={<UserDetailLayout />} />
             <Route path="/manage/menu" element={<Menu />} />
             <Route path="/manage/role" element={<Role />} />
 

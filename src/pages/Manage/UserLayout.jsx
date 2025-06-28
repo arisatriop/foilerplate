@@ -1,4 +1,5 @@
 import User from "../../components/manage/User";
+import UserDetailLayout from "./UserDetailLayout";
 
 export default function UserLayout() {
   return (
