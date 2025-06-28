@@ -147,6 +147,119 @@ export default function User() {
       </TableRow>
     ));
 
+  const renderTable = () => {
+    return (
+      <Table>
+        <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+          <TableRow>
+            <TableCell
+              isHeader
+              className="w-12 px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              No.
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              User
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              Role
+            </TableCell>
+            <TableCell
+              isHeader
+              className="px-5 py-3 text-end text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              Action
+            </TableCell>
+          </TableRow>
+        </TableHeader>
+
+        <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+          {isLoading ? (
+            renderShimmerRows()
+          ) : users.length > 0 ? (
+            renderUsers()
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                className="px-4 py-6 text-center text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap"
+              >
+                No users found
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderButtonPrev = () => {
+    return (
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
+          currentPage === 1
+            ? "text-gray-400 border-gray-200 dark:text-gray-600 dark:border-gray-800 cursor-not-allowed"
+            : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
+        }`}
+      >
+        Prev
+      </button>
+    );
+  };
+
+  const renderNextButton = () => {
+    return (
+      <button
+        onClick={() =>
+          setCurrentPage((prev) =>
+            Math.min(prev + 1, Math.ceil(totalItem / itemsPerPage))
+          )
+        }
+        disabled={currentPage === Math.ceil(totalItem / itemsPerPage)}
+        className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
+          currentPage === Math.ceil(totalItem / itemsPerPage)
+            ? "text-gray-400 border-gray-200 dark:text-gray-600 dark:border-gray-800 cursor-not-allowed"
+            : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
+        }`}
+      >
+        Next
+      </button>
+    );
+  };
+
+  const renderPageNumber = () => {
+    return (() => {
+      const pageNumbers = [];
+      let start = Math.max(currentPage - 1, 1);
+      let end = Math.min(start + 2, totalPages);
+      if (end - start < 2) start = Math.max(end - 2, 1);
+      for (let i = start; i <= end; i++) {
+        pageNumbers.push(i);
+      }
+      return pageNumbers.map((page) => (
+        <button
+          key={page}
+          onClick={() => setCurrentPage(page)}
+          className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
+            currentPage === page
+              ? "bg-blue-600 text-white font-bold border-blue-600"
+              : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
+          }`}
+        >
+          {page}
+        </button>
+      ));
+    })();
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/[0.05]">
@@ -167,55 +280,10 @@ export default function User() {
           + Create New
         </button>
       </div>
-      <div className="max-w-full overflow-x-auto">
-        <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-            <TableRow>
-              <TableCell
-                isHeader
-                className="w-12 px-4 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                No.
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                User
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Role
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-end text-theme-xs font-medium text-gray-500 dark:text-gray-400"
-              >
-                Action
-              </TableCell>
-            </TableRow>
-          </TableHeader>
 
-          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {isLoading ? (
-              renderShimmerRows()
-            ) : users.length > 0 ? (
-              renderUsers()
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="px-4 py-6 text-center text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap"
-                >
-                  No users found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Table */}
+      <div className="max-w-full overflow-x-auto">{renderTable()}</div>
+
       <div className="flex items-center justify-between p-4">
         <span className="text-sm text-gray-600 dark:text-gray-400">
           {users.length > 0
@@ -228,57 +296,13 @@ export default function User() {
 
         <div className="flex space-x-2">
           {/* Prev Button */}
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
-              currentPage === 1
-                ? "text-gray-400 border-gray-200 dark:text-gray-600 dark:border-gray-800 cursor-not-allowed"
-                : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
-            }`}
-          >
-            Prev
-          </button>
+          {renderButtonPrev()}
 
           {/* Page Numbers */}
-          {(() => {
-            const pageNumbers = [];
-            let start = Math.max(currentPage - 1, 1);
-            let end = Math.min(start + 2, totalPages);
-            if (end - start < 2) start = Math.max(end - 2, 1);
-            for (let i = start; i <= end; i++) {
-              pageNumbers.push(i);
-            }
-            return pageNumbers.map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
-                  currentPage === page
-                    ? "bg-blue-600 text-white font-bold border-blue-600"
-                    : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
-                }`}
-              >
-                {page}
-              </button>
-            ));
-          })()}
+          {renderPageNumber()}
 
-          <button
-            onClick={() =>
-              setCurrentPage((prev) =>
-                Math.min(prev + 1, Math.ceil(totalItem / itemsPerPage))
-              )
-            }
-            disabled={currentPage === Math.ceil(totalItem / itemsPerPage)}
-            className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
-              currentPage === Math.ceil(totalItem / itemsPerPage)
-                ? "text-gray-400 border-gray-200 dark:text-gray-600 dark:border-gray-800 cursor-not-allowed"
-                : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
-            }`}
-          >
-            Next
-          </button>
+          {/* Next Button */}
+          {renderNextButton()}
         </div>
       </div>
     </div>
