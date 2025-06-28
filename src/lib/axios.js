@@ -33,7 +33,6 @@ const setupAuthInterceptor = (
 
       try {
         let refreshToken = getRefreshToken();
-        console.log("Using refresh token:", refreshToken);
         const refreshRes = await authToken(axiosInstance, refreshToken);
         const newAccessToken = refreshRes.data.data.accessToken;
 

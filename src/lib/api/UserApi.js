@@ -4,8 +4,15 @@ export const userList = async (
   { limit, offset, keyword = "" }
 ) => {
   let path = `/manage/users?keyword=${keyword}&limit=${limit}&offset=${offset}`;
-  console.log("Fetching users from path:", path);
   return await axiosInstance.get(path, {
+    headers: {
+      Authorization: accessToken,
+    },
+  });
+};
+
+export const userDelete = async (axiosInstance, accessToken, id) => {
+  return await axiosInstance.delete(`/manage/users/${id}`, {
     headers: {
       Authorization: accessToken,
     },

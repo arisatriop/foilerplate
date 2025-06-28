@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { userList } from "../../lib/api/UserApi";
+import React, { use, useEffect, useState } from "react";
+import { userDelete, userList } from "../../lib/api/UserApi";
 import { axiosGoilerplateInstance, axiosReqresInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
 import { useLocalStorage } from "react-use";
@@ -14,12 +14,15 @@ import { MdDeleteForever, MdEdit } from "react-icons/md";
 import Badge from "../ui/badge/Badge";
 
 export default function User() {
+  const itemsPerPage = 5;
   const [users, setUsers] = useState([]);
   const [totalItem, setTotalItem] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const itemsPerPage = 5;
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const totalPages = Math.ceil(totalItem / itemsPerPage);
 
@@ -36,6 +39,10 @@ export default function User() {
     const offset = (currentPage - 1) * itemsPerPage;
     fetchUsers(itemsPerPage, offset, searchTerm);
   }, [currentPage]);
+
+  useEffect(() => {
+    console.log("isDeleting changed:", isDeleting);
+  }, [isDeleting]);
 
   async function fetchUsers(limit, offset, searchTerm) {
     try {
@@ -55,6 +62,51 @@ export default function User() {
       setIsLoading(false);
     }
   }
+
+  async function deleteUser(id) {
+    setIsDeleting(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await userDelete(
+        axiosGoilerplateInstance,
+        `Bearer ${accessToken}`,
+        id
+      );
+      return true;
+    } catch (error) {
+      if (error.response && error.response.status >= 500) {
+        toast.error(error.response.data.message);
+        return false;
+      }
+      toast.warn(error.response.data.message);
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    const success = await deleteUser(userToDelete.id);
+    if (!success) return;
+
+    toast.success(`${userToDelete.name} has been deleted.`);
+
+    setDeleteModal(false);
+    setUserToDelete(null);
+    setCurrentPage(1);
+
+    await fetchUsers(itemsPerPage, 0, searchTerm); // Call manually
+  };
+
+  const cancelDelete = () => {
+    setDeleteModal(false);
+    setUserToDelete(null);
+  };
 
   const renderUsers = () => {
     return users.map((user, index) => (
@@ -103,14 +155,14 @@ export default function User() {
         <TableCell className="px-4 py-3 text-end text-theme-sm text-gray-500 dark:text-gray-400">
           <div className="flex justify-end gap-3">
             <button
-              onClick={() => alert(`Edit ${user.name}`)}
-              className="text-blue-600 hover:text-blue-800"
+              onClick={() => handleDeleteClick(user)}
+              className="text-blue-400 hover:text-blue-800"
             >
               <MdEdit className="w-5 h-5" />
             </button>
             <button
-              onClick={() => confirm(`Delete ${user.name}`)}
-              className="text-red-600 hover:text-red-800"
+              onClick={() => handleDeleteClick(user)}
+              className="text-red-400 hover:text-red-800"
             >
               <MdDeleteForever className="w-5 h-5" />
             </button>
@@ -305,6 +357,49 @@ export default function User() {
           {renderNextButton()}
         </div>
       </div>
+
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          {/* <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-sm w-full shadow-xl transform transition-all duration-300 scale-95 opacity-0 animate-fade-in"> */}
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-sm w-full shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              Confirm Deletion
+            </h2>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Are you sure you want to delete <br />
+                <strong>
+                  {userToDelete?.name} - {userToDelete?.email}
+                </strong>
+                ?
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              {!isDeleting && (
+                <button
+                  onClick={cancelDelete}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  Cancel
+                </button>
+              )}
+
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className={`px-4 py-2 text-sm font-medium text-white rounded-md transition
+                ${
+                  isDeleting
+                    ? "bg-red-400 cursor-not-allowed opacity-50"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
