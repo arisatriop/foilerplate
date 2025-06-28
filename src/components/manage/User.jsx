@@ -18,24 +18,20 @@ export default function User() {
   const [totalItem, setTotalItem] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 5;
 
   const totalPages = Math.ceil(totalItem / itemsPerPage);
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItem);
 
-  // 1. Debounce searchTerm
   useEffect(() => {
-    const offset = 0; // reset ke halaman 1 saat search
+    const offset = 0;
     const delayDebounce = setTimeout(() => {
-      setCurrentPage(1); // set halaman ke-1
+      setCurrentPage(1);
       fetchUsers(itemsPerPage, offset, searchTerm);
     }, 500);
-
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
 
-  // 2. Langsung fetch saat currentPage berubah
   useEffect(() => {
     const offset = (currentPage - 1) * itemsPerPage;
     fetchUsers(itemsPerPage, offset, searchTerm);
@@ -43,6 +39,7 @@ export default function User() {
 
   async function fetchUsers(limit, offset, searchTerm) {
     try {
+      setIsLoading(true);
       const accessToken = localStorage.getItem("accessToken");
       const response = await userList(
         axiosGoilerplateInstance,
@@ -54,6 +51,8 @@ export default function User() {
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Whoops! Something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -121,6 +120,33 @@ export default function User() {
     ));
   };
 
+  const renderShimmerRows = () =>
+    [...Array(itemsPerPage)].map((_, i) => (
+      <TableRow key={i} className="animate-pulse">
+        <TableCell className="px-4 py-3">
+          <div className="w-5 h-4 rounded bg-gray-200 dark:bg-gray-700" />
+        </TableCell>
+        <TableCell className="px-5 py-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full" />
+            <div className="space-y-1">
+              <div className="w-28 h-4 rounded bg-gray-300 dark:bg-gray-700" />
+              <div className="w-20 h-3 rounded bg-gray-300 dark:bg-gray-700" />
+            </div>
+          </div>
+        </TableCell>
+        <TableCell className="px-5 py-3">
+          <div className="w-16 h-4 rounded bg-gray-300 dark:bg-gray-700" />
+        </TableCell>
+        <TableCell className="px-4 py-3 text-end">
+          <div className="flex justify-end gap-3">
+            <div className="w-5 h-5 rounded bg-gray-300 dark:bg-gray-700" />
+            <div className="w-5 h-5 rounded bg-gray-300 dark:bg-gray-700" />
+          </div>
+        </TableCell>
+      </TableRow>
+    ));
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/[0.05]">
@@ -173,7 +199,9 @@ export default function User() {
           </TableHeader>
 
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {users.length > 0 ? (
+            {isLoading ? (
+              renderShimmerRows()
+            ) : users.length > 0 ? (
               renderUsers()
             ) : (
               <TableRow>
@@ -214,20 +242,13 @@ export default function User() {
 
           {/* Page Numbers */}
           {(() => {
-            const totalPages = Math.ceil(totalItem / itemsPerPage);
             const pageNumbers = [];
-
             let start = Math.max(currentPage - 1, 1);
             let end = Math.min(start + 2, totalPages);
-
-            if (end - start < 2) {
-              start = Math.max(end - 2, 1);
-            }
-
+            if (end - start < 2) start = Math.max(end - 2, 1);
             for (let i = start; i <= end; i++) {
               pageNumbers.push(i);
             }
-
             return pageNumbers.map((page) => (
               <button
                 key={page}
@@ -243,7 +264,6 @@ export default function User() {
             ));
           })()}
 
-          {/* Next Button */}
           <button
             onClick={() =>
               setCurrentPage((prev) =>
