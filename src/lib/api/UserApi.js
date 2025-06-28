@@ -1,9 +1,10 @@
 export const userList = async (
   axiosInstance,
   accessToken,
-  { page, perPage }
+  { limit, offset, keyword = "" }
 ) => {
-  let path = `/manage/users?page=${page}&per_page=${perPage}`;
+  let path = `/manage/users?keyword=${keyword}&limit=${limit}&offset=${offset}`;
+  console.log("Fetching users from path:", path);
   return await axiosInstance.get(path, {
     headers: {
       Authorization: accessToken,

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { userList } from "../../lib/api/UserApi";
 import { axiosGoilerplateInstance, axiosReqresInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
-import { useEffectOnce, useLocalStorage } from "react-use";
+import { useLocalStorage } from "react-use";
 import {
   Table,
   TableHeader,
@@ -14,23 +14,43 @@ import { MdDeleteForever, MdEdit } from "react-icons/md";
 import Badge from "../ui/badge/Badge";
 
 export default function User() {
-  // const [id, setId] = useState("");
-  // const [name, setName] = useState("");
-  // const [email, setEmail] = useState("");
-  // const [firstName, setFirstName] = useState("");
-  // const [lastName, setLastName] = useState("");
   const [users, setUsers] = useState([]);
+  const [totalItem, setTotalItem] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  async function fetchUsers(page, perPage) {
+  const totalPages = Math.ceil(totalItem / itemsPerPage);
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItem);
+
+  // 1. Debounce searchTerm
+  useEffect(() => {
+    const offset = 0; // reset ke halaman 1 saat search
+    const delayDebounce = setTimeout(() => {
+      setCurrentPage(1); // set halaman ke-1
+      fetchUsers(itemsPerPage, offset, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
+
+  // 2. Langsung fetch saat currentPage berubah
+  useEffect(() => {
+    const offset = (currentPage - 1) * itemsPerPage;
+    fetchUsers(itemsPerPage, offset, searchTerm);
+  }, [currentPage]);
+
+  async function fetchUsers(limit, offset, searchTerm) {
     try {
       const accessToken = localStorage.getItem("accessToken");
       const response = await userList(
         axiosGoilerplateInstance,
         `Bearer ${accessToken}`,
-        { page, perPage }
+        { limit, offset, keyword: searchTerm }
       );
-
       setUsers(response.data.data);
+      setTotalItem(response.data.pagination.totalItem);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Whoops! Something went wrong.");
@@ -59,21 +79,27 @@ export default function User() {
           </div>
         </TableCell>
         <TableCell className="px-5 py-3 text-theme-xs font-medium text-gray-500 dark:text-gray-400 space-x-1">
-          {user.roles.map((role, idx) => (
-            <Badge
-              key={idx}
-              size="sm"
-              color={
-                role.name === "Super Admin"
-                  ? "error"
-                  : role.name === "Owner"
-                  ? "warning"
-                  : "primary"
-              }
-            >
-              {role.name}
+          {user?.roles && Array.isArray(user.roles) && user.roles.length > 0 ? (
+            user.roles.map((role, idx) => (
+              <Badge
+                key={idx}
+                size="sm"
+                color={
+                  role?.name === "Super Admin"
+                    ? "error"
+                    : role?.name === "Owner"
+                    ? "warning"
+                    : "primary"
+                }
+              >
+                {role?.name || "-"}
+              </Badge>
+            ))
+          ) : (
+            <Badge size="sm" color="secondary">
+              -
             </Badge>
-          ))}
+          )}
         </TableCell>
         <TableCell className="px-4 py-3 text-end text-theme-sm text-gray-500 dark:text-gray-400">
           <div className="flex justify-end gap-3">
@@ -95,18 +121,17 @@ export default function User() {
     ));
   };
 
-  useEffectOnce(() => {
-    fetchUsers(1, 10).then(() => {
-      console.log("Users fetched successfully");
-    });
-  });
-
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/[0.05]">
         <input
           type="text"
           placeholder="Search by name or email..."
+          value={searchTerm}
+          onChange={(e) => {
+            setCurrentPage(1); // reset ke halaman 1 kalau ada perubahan pencarian
+            setSearchTerm(e.target.value);
+          }}
           className="w-full max-w-xs px-3 py-2 border rounded-md text-sm text-gray-800 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
         />
         <button
@@ -162,6 +187,79 @@ export default function User() {
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex items-center justify-between p-4">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {users.length > 0
+            ? `Showing ${(currentPage - 1) * itemsPerPage + 1} to ${Math.min(
+                currentPage * itemsPerPage,
+                totalItem
+              )} of ${totalItem} entries`
+            : "Showing 0 of 0 entries"}
+        </span>
+
+        <div className="flex space-x-2">
+          {/* Prev Button */}
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
+              currentPage === 1
+                ? "text-gray-400 border-gray-200 dark:text-gray-600 dark:border-gray-800 cursor-not-allowed"
+                : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
+            }`}
+          >
+            Prev
+          </button>
+
+          {/* Page Numbers */}
+          {(() => {
+            const totalPages = Math.ceil(totalItem / itemsPerPage);
+            const pageNumbers = [];
+
+            let start = Math.max(currentPage - 1, 1);
+            let end = Math.min(start + 2, totalPages);
+
+            if (end - start < 2) {
+              start = Math.max(end - 2, 1);
+            }
+
+            for (let i = start; i <= end; i++) {
+              pageNumbers.push(i);
+            }
+
+            return pageNumbers.map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
+                  currentPage === page
+                    ? "bg-blue-600 text-white font-bold border-blue-600"
+                    : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
+                }`}
+              >
+                {page}
+              </button>
+            ));
+          })()}
+
+          {/* Next Button */}
+          <button
+            onClick={() =>
+              setCurrentPage((prev) =>
+                Math.min(prev + 1, Math.ceil(totalItem / itemsPerPage))
+              )
+            }
+            disabled={currentPage === Math.ceil(totalItem / itemsPerPage)}
+            className={`px-3 py-1 text-sm rounded-md border transition duration-150 ${
+              currentPage === Math.ceil(totalItem / itemsPerPage)
+                ? "text-gray-400 border-gray-200 dark:text-gray-600 dark:border-gray-800 cursor-not-allowed"
+                : "text-gray-800 border-gray-300 hover:bg-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
+            }`}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
