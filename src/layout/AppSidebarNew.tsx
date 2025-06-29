@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -7,80 +7,76 @@ const SvgIcon: React.FC<{
   className?: string;
   isActive?: boolean;
 }> = ({ url, className = "", isActive }) => {
-  const [svg, setSvg] = useState<string | null>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
   const [error, setError] = useState(false);
 
   const colorClass = isActive
     ? "text-indigo-500"
     : "text-gray-900 dark:text-white";
-  const wrapperClass = `w-4 h-4 ${colorClass} ${className}`;
 
-  const defaultIcon = (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className={wrapperClass}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-    </svg>
-  );
+  const wrapperClass = `w-5 h-5 inline-flex items-center justify-center ${colorClass} ${className}`;
 
   useEffect(() => {
     if (!url || url.trim() === "") {
-      setSvg(null);
       setError(true);
       return;
     }
 
-    if (url.trim().startsWith("<svg")) {
-      const sanitized = url
-        .replace(/fill="[^"]*"/g, 'fill="currentColor"')
-        .replace(/(width|height)="[^"]*"/g, "")
-        .replace(/class="[^"]*"/g, "");
-      setSvg(sanitized);
-      setError(false);
-      return;
-    }
+    const loadSvg = async () => {
+      try {
+        let svgString = "";
 
-    let canceled = false;
-
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error("Fetch failed");
-        return res.text();
-      })
-      .then((data) => {
-        if (!canceled) {
-          const sanitized = data
-            .replace(/fill="[^"]*"/g, 'fill="currentColor"')
-            .replace(/(width|height)="[^"]*"/g, "")
-            .replace(/class="[^"]*"/g, "");
-          setSvg(sanitized);
-          setError(false);
+        if (url.trim().startsWith("<svg")) {
+          svgString = url;
+        } else {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Failed to fetch");
+          svgString = await res.text();
         }
-      })
-      .catch(() => {
-        if (!canceled) {
-          setError(true);
-        }
-      });
 
-    return () => {
-      canceled = true;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgString, "image/svg+xml");
+        const svgEl = doc.querySelector("svg");
+
+        if (!svgEl) throw new Error("SVG not found");
+
+        // Cleanup style from external source like Lucide
+        svgEl.removeAttribute("width");
+        svgEl.removeAttribute("height");
+        svgEl.removeAttribute("class");
+        svgEl.setAttribute("fill", "none");
+        svgEl.setAttribute("stroke", "currentColor");
+        svgEl.classList.add("w-full", "h-full");
+
+        if (containerRef.current) {
+          containerRef.current.innerHTML = "";
+          containerRef.current.appendChild(svgEl);
+        }
+      } catch (e) {
+        setError(true);
+      }
     };
+
+    loadSvg();
   }, [url]);
 
-  if (error || !svg) return defaultIcon;
+  if (error) {
+    return (
+      <svg
+        className={wrapperClass}
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
+    );
+  }
 
-  return (
-    <div className={wrapperClass} dangerouslySetInnerHTML={{ __html: svg }} />
-  );
+  return <span ref={containerRef} className={wrapperClass} />;
 };
 
 const AppSidebar: React.FC = () => {
@@ -193,12 +189,15 @@ const AppSidebar: React.FC = () => {
           children: [
             {
               name: "User",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M0 96C0 60.7 28.7 32 64 32l384 0c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zm64 64l0 256 160 0 0-256L64 160zm384 0l-160 0 0 256 160 0 0-256z"/></svg>`,
+              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
+</svg>
+`,
               path: "/manage/user",
             },
             {
               name: "Role",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-dashboard-icon lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`,
+              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M575.8 255.5c0 18-15 32.1-32 32.1l-32 0 .7 160.2c0 2.7-.2 5.4-.5 8.1l0 16.2c0 22.1-17.9 40-40 40l-16 0c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1L416 512l-24 0c-22.1 0-40-17.9-40-40l0-24 0-64c0-17.7-14.3-32-32-32l-64 0c-17.7 0-32 14.3-32 32l0 64 0 24c0 22.1-17.9 40-40 40l-24 0-31.9 0c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2l-16 0c-22.1 0-40-17.9-40-40l0-112c0-.9 0-1.9 .1-2.8l0-69.7-32 0c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></svg>`,
               path: "/manage/role",
             },
             {
