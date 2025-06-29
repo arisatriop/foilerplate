@@ -2,86 +2,120 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 
+const DefaultIcon = ({ className }: { className: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+  </svg>
+);
+
 const SvgIcon: React.FC<{
   url?: string;
   className?: string;
   isActive?: boolean;
 }> = ({ url, className = "", isActive }) => {
-  const containerRef = useRef<HTMLSpanElement>(null);
+  const [svgHtml, setSvgHtml] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
   const colorClass = isActive
     ? "text-indigo-500"
     : "text-gray-900 dark:text-white";
 
-  const wrapperClass = `w-5 h-5 inline-flex items-center justify-center ${colorClass} ${className}`;
+  const wrapperClass = `w-4 h-4 ${colorClass} ${className}`;
+
+  const sanitizeSvg = (raw: string): string => {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(raw, "image/svg+xml");
+      const svg = doc.querySelector("svg");
+
+      if (!svg) throw new Error("Invalid SVG");
+
+      // Remove unwanted attributes
+      svg.removeAttribute("class");
+      svg.removeAttribute("width");
+      svg.removeAttribute("height");
+
+      const isStrokeBased =
+        !!svg.getAttribute("stroke") || svg.innerHTML.includes("stroke=");
+
+      if (isStrokeBased) {
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("fill", "none");
+      } else {
+        svg.setAttribute("fill", "currentColor");
+        svg.removeAttribute("stroke");
+      }
+
+      // Fix children elements
+      svg.querySelectorAll("*").forEach((el) => {
+        if (isStrokeBased) {
+          el.setAttribute("stroke", "currentColor");
+          el.setAttribute("fill", "none");
+        } else {
+          el.setAttribute("fill", "currentColor");
+          el.removeAttribute("stroke");
+        }
+      });
+
+      return svg.outerHTML;
+    } catch (e) {
+      return "";
+    }
+  };
 
   useEffect(() => {
     if (!url || url.trim() === "") {
-      setError(true);
+      setSvgHtml(null);
       return;
     }
 
-    const loadSvg = async () => {
-      try {
-        let svgString = "";
+    if (url.trim().startsWith("<svg")) {
+      setSvgHtml(sanitizeSvg(url));
+      return;
+    }
 
-        if (url.trim().startsWith("<svg")) {
-          svgString = url;
-        } else {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error("Failed to fetch");
-          svgString = await res.text();
+    let canceled = false;
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.text();
+      })
+      .then((text) => {
+        if (!canceled) {
+          const sanitized = sanitizeSvg(text);
+          setSvgHtml(sanitized || null);
         }
+      })
+      .catch(() => {
+        if (!canceled) setError(true);
+      });
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(svgString, "image/svg+xml");
-        const svgEl = doc.querySelector("svg");
-
-        if (!svgEl) throw new Error("SVG not found");
-
-        // Clean unwanted attributes
-        svgEl.removeAttribute("width");
-        svgEl.removeAttribute("height");
-        svgEl.removeAttribute("class");
-
-        // Ensure viewBox exists
-        if (!svgEl.hasAttribute("viewBox")) {
-          svgEl.setAttribute("viewBox", "0 0 24 24");
-        }
-
-        // Keep original fill/stroke — do NOT override
-        svgEl.classList.add("w-full", "h-full");
-
-        if (containerRef.current) {
-          containerRef.current.innerHTML = "";
-          containerRef.current.appendChild(svgEl);
-        }
-      } catch (e) {
-        setError(true);
-      }
+    return () => {
+      canceled = true;
     };
-
-    loadSvg();
   }, [url]);
 
-  if (error) {
-    return (
-      <svg
-        className={wrapperClass}
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-      >
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-        <path d="M3 3v5h5" />
-      </svg>
-    );
+  if (error || !url || url.trim() === "" || !svgHtml) {
+    return <DefaultIcon className={wrapperClass} />;
   }
 
-  return <span ref={containerRef} className={wrapperClass} />;
+  return (
+    <div
+      className={wrapperClass}
+      dangerouslySetInnerHTML={{ __html: svgHtml }}
+    />
+  );
 };
 
 const AppSidebar: React.FC = () => {
