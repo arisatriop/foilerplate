@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { Link } from "react-router";
+import { Button } from "@headlessui/react";
+import { axiosGoilerplateInstance } from "../../lib/axios";
+import { authLogout } from "../../lib/api/AuthApi";
+import { toast } from "react-toastify";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +16,28 @@ export default function UserDropdown() {
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  async function handleLogout(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+
+    try {
+      const response = await authLogout(
+        axiosGoilerplateInstance,
+        localStorage.getItem("accessToken")
+      );
+      if (response?.status === 200) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        toast.success("Logout successful!");
+        setTimeout(() => {
+          window.location.href = "/signin";
+        }, 500); // 1.5 seconds delay
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  }
+
   return (
     <div className="relative">
       <button
@@ -135,8 +160,8 @@ export default function UserDropdown() {
             </DropdownItem>
           </li>
         </ul>
-        <Link
-          to="/signin"
+        <Button
+          onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <svg
@@ -155,7 +180,7 @@ export default function UserDropdown() {
             />
           </svg>
           Sign out
-        </Link>
+        </Button>
       </Dropdown>
     </div>
   );

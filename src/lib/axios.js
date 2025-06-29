@@ -55,7 +55,7 @@ const setupAuthInterceptor = (
 // === Init Interceptor Globally ===
 const getRefreshToken = () => localStorage.getItem("refreshToken");
 const setAccessToken = (newAccessToken) =>
-  localStorage.setItem("accessToken", newAccessToken);
+  localStorage.setItem("accessToken", "Bearer " + newAccessToken);
 
 setupAuthInterceptor(axiosGoilerplateInstance, getRefreshToken, setAccessToken);
 setupAuthInterceptor(axiosReqresInstance, getRefreshToken, setAccessToken);

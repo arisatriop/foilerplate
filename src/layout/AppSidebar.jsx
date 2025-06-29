@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
+import { currentUser } from "../lib/api/AuthApi";
+import { axiosGoilerplateInstance } from "../lib/axios";
 
 const DefaultIcon = ({ className }) => (
   <svg
@@ -138,11 +140,11 @@ const AppSidebar = () => {
   const renderRecursive = (items, level = 0) => (
     <ul className={level === 0 ? "space-y-2" : "ml-4 mt-2 space-y-1"}>
       {items.map((item) => {
-        const hasChildren = item.children?.length;
+        const hasChildren = Array.isArray(item.child) && item.child.length > 0;
         const isOpen = openMenus[item.name];
         const active = item.path
           ? isActive(item.path)
-          : isAnyChildActive(item.children);
+          : isAnyChildActive(item.child);
 
         return (
           <li key={item.name}>
@@ -161,7 +163,7 @@ const AppSidebar = () => {
                       : "lg:justify-start"
                   }`}
               >
-                <SvgIcon url={item.iconUrl} isActive={active} />
+                <SvgIcon url={item.icon} isActive={active} />
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <>
                     <span className="text-sm font-medium">{item.name}</span>
@@ -194,19 +196,33 @@ const AppSidebar = () => {
                         : "hover:bg-black/5 dark:hover:bg-white/5 text-gray-900 dark:text-white"
                     }`}
                 >
-                  <SvgIcon url={item.iconUrl} isActive={active} />
+                  <SvgIcon url={item.icon} isActive={active} />
                   {(isExpanded || isHovered || isMobileOpen) && (
                     <span className="text-sm font-medium">{item.name}</span>
                   )}
                 </Link>
               )
             )}
-            {hasChildren && isOpen && renderRecursive(item.children, level + 1)}
+            {hasChildren && isOpen && renderRecursive(item.child, level + 1)}
           </li>
         );
       })}
     </ul>
   );
+
+  async function fetchCurrentUser() {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await currentUser(axiosGoilerplateInstance, accessToken);
+      setMenu(response.data.data.role);
+    } catch (error) {
+      console.error("Failed to fetch menu", error);
+    }
+  }
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
 
   const Menus = [
     {
@@ -343,8 +359,8 @@ const AppSidebar = () => {
 
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col gap-6">
-          {Menus.map((group) => (
-            <div key={group.title}>
+          {menu.map((group) => (
+            <div key={group.name}>
               <h2
                 className={`mb-2 text-xs uppercase text-gray-400 dark:text-gray-500 ${
                   !isExpanded && !isHovered
@@ -352,9 +368,9 @@ const AppSidebar = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? group.title : "⋯"}
+                {isExpanded || isHovered || isMobileOpen ? group.name : "⋯"}
               </h2>
-              {renderRecursive(group.items)}
+              {renderRecursive(group.menu)}
             </div>
           ))}
         </nav>

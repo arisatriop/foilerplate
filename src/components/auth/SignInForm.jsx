@@ -29,7 +29,7 @@ export default function SignInForm() {
       if (response?.status === 200 && response.data?.data) {
         const { accessToken, refreshToken } = response.data.data;
 
-        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("accessToken", "Bearer " + accessToken);
         localStorage.setItem("refreshToken", refreshToken);
         toast.success("Login successful!");
 

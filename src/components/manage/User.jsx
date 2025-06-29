@@ -46,11 +46,11 @@ export default function User() {
     try {
       setIsLoading(true);
       const accessToken = localStorage.getItem("accessToken");
-      const response = await userList(
-        axiosGoilerplateInstance,
-        `Bearer ${accessToken}`,
-        { limit, offset, keyword: searchTerm }
-      );
+      const response = await userList(axiosGoilerplateInstance, accessToken, {
+        limit,
+        offset,
+        keyword: searchTerm,
+      });
       setUsers(response.data.data);
       setTotalItem(response.data.pagination.totalItem);
     } catch (error) {
@@ -67,7 +67,7 @@ export default function User() {
       const accessToken = localStorage.getItem("accessToken");
       const response = await userDelete(
         axiosGoilerplateInstance,
-        `Bearer ${accessToken}`,
+        accessToken,
         id
       );
       return true;
