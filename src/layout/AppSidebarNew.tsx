@@ -2,18 +2,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 
-// Komponen untuk fetch & render SVG dengan support warna dinamis
-const DEFAULT_ICON_DATA_URI =
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXJlZnJlc2gtY3ctb2ZmLWljb24gbHVjaWRlLXJlZnJlc2gtY3ctb2ZmIj48cGF0aCBkPSJNMjEgOEwxOC43NCA1Ljc0QTkuNzUgOS43NSAwIDAgMCAxMiAzQzExIDMgMTAuMDMgMy4xNiA5LjEzIDMuNDciLz48cGF0aCBkPSJNOCAxNkgzdjUiLz48cGF0aCBkPSJNMyAxMkMzIDkuNTEgNCA3LjI2IDUuNjQgNS42NCIvPjxwYXRoIGQ9Im0zIDE2IDIuMjYgMi4yNkE5Ljc1IDkuNzUgMCAwIDAgMTIgMjFjMi40OSAwIDQuNzQtMSA2LjM2LTIuNjQiLz48cGF0aCBkPSJNMjEgMTJjMCAxLS4xNiAxLjk3LS40NyAyLjg3Ii8+PHBhdGggZD0iTTIxIDN2NWgtNSIvPjxwYXRoIGQ9Ik0yMiAyMiAyIDIiLz48L3N2Zz4=";
-
-type SvgIconProps = {
+const SvgIcon: React.FC<{
   url?: string;
   className?: string;
   isActive?: boolean;
-  colorClass?: string;
-};
-
-const SvgIcon: React.FC<SvgIconProps> = ({ url, className = "", isActive }) => {
+}> = ({ url, className = "", isActive }) => {
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
@@ -23,8 +16,15 @@ const SvgIcon: React.FC<SvgIconProps> = ({ url, className = "", isActive }) => {
       return;
     }
 
-    let canceled = false;
+    if (url.trim().startsWith("<svg")) {
+      const sanitized = url
+        .replace(/fill="[^"]*"/g, 'fill="currentColor"')
+        .replace(/(width|height)="[^"]*"/g, "");
+      setSvg(sanitized);
+      return;
+    }
 
+    let canceled = false;
     fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error("Fetch failed");
@@ -53,11 +53,19 @@ const SvgIcon: React.FC<SvgIconProps> = ({ url, className = "", isActive }) => {
 
   if (error || !url) {
     return (
-      <img
-        src={DEFAULT_ICON_DATA_URI}
-        alt="default icon"
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
         className={`w-4 h-4 ${colorClass} ${className}`}
-      />
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
     );
   }
 
@@ -71,51 +79,34 @@ const SvgIcon: React.FC<SvgIconProps> = ({ url, className = "", isActive }) => {
   );
 };
 
-type NavItem = {
-  name: string;
-  iconUrl?: string;
-  path?: string;
-  pro?: boolean;
-  new?: boolean;
-  children?: NavItem[];
-};
+const appleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`;
 
-type MenuGroup = {
-  title: string;
-  items: NavItem[];
-};
-
-const Menus: MenuGroup[] = [
+const Menus = [
   {
     title: "SUPER ADMIN",
     items: [
       {
         name: "Dashboard",
-        iconUrl:
-          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcGxlLWljb24gbHVjaWRlLWFwcGxlIj48cGF0aCBkPSJNMTIgMjAuOTRjMS41IDAgMi43NSAxLjA2IDQgMS4wNiAzIDAgNi04IDYtMTIuMjJBNC45MSA0LjkxIDAgMCAwIDE3IDVjLTIuMjIgMC00IDEuNDQtNSAyLTEtLjU2LTIuNzgtMi01LTJhNC45IDQuOSAwIDAgMC01IDQuNzhDMiAxNCA1IDIyIDggMjJjMS4yNSAwIDIuNS0xLjA2IDQtMS4wNloiLz48cGF0aCBkPSJNMTAgMmMxIC41IDIgMiAyIDUiLz48L3N2Zz4=",
+        iconUrl: "",
         path: "/",
       },
       {
         name: "Manage",
-        iconUrl:
-          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcGxlLWljb24gbHVjaWRlLWFwcGxlIj48cGF0aCBkPSJNMTIgMjAuOTRjMS41IDAgMi43NSAxLjA2IDQgMS4wNiAzIDAgNi04IDYtMTIuMjJBNC45MSA0LjkxIDAgMCAwIDE3IDVjLTIuMjIgMC00IDEuNDQtNSAyLTEtLjU2LTIuNzgtMi01LTJhNC45IDQuOSAwIDAgMC01IDQuNzhDMiAxNCA1IDIyIDggMjJjMS4yNSAwIDIuNS0xLjA2IDQtMS4wNloiLz48cGF0aCBkPSJNMTAgMmMxIC41IDIgMiAyIDUiLz48L3N2Zz4=",
+        iconUrl: appleSvg,
         children: [
           {
             name: "User",
-            iconUrl:
-              "https://cdn.jsdelivr.net/npm/react-icons/fa@latest/fa/FaUser.svg",
+            iconUrl: appleSvg,
             path: "/manage/user",
           },
           {
             name: "Role",
-            iconUrl:
-              "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcGxlLWljb24gbHVjaWRlLWFwcGxlIj48cGF0aCBkPSJNMTIgMjAuOTRjMS41IDAgMi43NSAxLjA2IDQgMS4wNiAzIDAgNi04IDYtMTIuMjJBNC45MSA0LjkxIDAgMCAwIDE3IDVjLTIuMjIgMC00IDEuNDQtNSAyLTEtLjU2LTIuNzgtMi01LTJhNC45IDQuOSAwIDAgMC01IDQuNzhDMiAxNCA1IDIyIDggMjJjMS4yNSAwIDIuNS0xLjA2IDQtMS4wNloiLz48cGF0aCBkPSJNMTAgMmMxIC41IDIgMiAyIDUiLz48L3N2Zz4=",
+            iconUrl: appleSvg,
             path: "/manage/role",
           },
           {
             name: "Menu",
-            iconUrl:
-              "https://cdn.jsdelivr.net/npm/react-icons/fa@latest/fa/FaList.svg",
+            iconUrl: appleSvg,
             path: "/manage/menu",
           },
         ],
@@ -123,40 +114,45 @@ const Menus: MenuGroup[] = [
     ],
   },
   {
-    title: "ADMIN",
+    title: "OWNER",
     items: [
       {
-        name: "Analytics",
-        iconUrl:
-          "https://cdn.jsdelivr.net/npm/react-icons/md@latest/md/MdPieChart.svg",
-        path: "/admin/analytics",
-      },
-      {
-        name: "Integrations",
-        iconUrl:
-          "https://cdn.jsdelivr.net/npm/react-icons/md@latest/md/MdCode.svg",
+        name: "Manage",
+        iconUrl: appleSvg,
         children: [
           {
-            name: "API",
-            iconUrl:
-              "https://cdn.jsdelivr.net/npm/react-icons/md@latest/md/MdApi.svg",
-            path: "/admin/integrations/api",
-            pro: true,
+            name: "User",
+            iconUrl: appleSvg,
+            path: "/manage/user",
           },
           {
-            name: "Webhooks",
-            iconUrl:
-              "https://cdn.jsdelivr.net/npm/react-icons/md@latest/md/MdWebhook.svg",
-            path: "/admin/integrations/webhooks",
-            new: true,
+            name: "Role",
+            iconUrl: appleSvg,
+            path: "/manage/role",
+            children: [
+              {
+                name: "User",
+                iconUrl: appleSvg,
+                path: "/manage/user",
+              },
+              {
+                name: "Role",
+                iconUrl: appleSvg,
+                path: "/manage/role",
+              },
+              {
+                name: "Menu",
+                iconUrl: appleSvg,
+                path: "/manage/menu",
+              },
+            ],
+          },
+          {
+            name: "Menu",
+            iconUrl: appleSvg,
+            path: "/manage/menu",
           },
         ],
-      },
-      {
-        name: "Inventory",
-        iconUrl:
-          "https://cdn.jsdelivr.net/npm/react-icons/md@latest/md/MdInventory.svg",
-        path: "/admin/inventory",
       },
     ],
   },
@@ -172,7 +168,7 @@ const AppSidebar: React.FC = () => {
     [location.pathname]
   );
 
-  const isAnyChildActive = (children?: NavItem[]): boolean => {
+  const isAnyChildActive = (children?: any[]): boolean => {
     return !!children?.some(
       (c) => c.path === location.pathname || isAnyChildActive(c.children)
     );
@@ -182,7 +178,7 @@ const AppSidebar: React.FC = () => {
     setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const renderRecursive = (items: NavItem[], level = 0) => (
+  const renderRecursive = (items: any[], level = 0) => (
     <ul className={level === 0 ? "space-y-2" : "ml-4 mt-2 space-y-1"}>
       {items.map((item) => {
         const hasChildren = item.children?.length;
@@ -209,10 +205,7 @@ const AppSidebar: React.FC = () => {
                   }`}
               >
                 {item.iconUrl && (
-                  <SvgIcon
-                    url={item.iconUrl}
-                    colorClass={active ? "text-indigo-500" : "text-gray-500"}
-                  />
+                  <SvgIcon url={item.iconUrl} isActive={active} />
                 )}
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <>
@@ -247,10 +240,7 @@ const AppSidebar: React.FC = () => {
                     }`}
                 >
                   {item.iconUrl && (
-                    <SvgIcon
-                      url={item.iconUrl}
-                      colorClass={active ? "text-indigo-500" : "text-gray-500"}
-                    />
+                    <SvgIcon url={item.iconUrl} isActive={active} />
                   )}
                   {(isExpanded || isHovered || isMobileOpen) && (
                     <span className="text-sm font-medium">{item.name}</span>
