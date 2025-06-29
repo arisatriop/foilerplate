@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "User", path: "/manage/user", pro: false },
       { name: "Role", path: "/manage/role", pro: false },
-      { name: "Menu", path: "/manage/menu", pro: false }
+      { name: "Menu", path: "/manage/menu", pro: false },
     ],
   },
 ];
@@ -48,7 +48,7 @@ const admin: NavItem[] = [
     name: "Integrations",
     subItems: [
       { name: "API", path: "/admin/integrations/api", pro: true },
-      { name: "Webhooks", path: "/admin/integrations/webhooks", new: true }
+      { name: "Webhooks", path: "/admin/integrations/webhooks", new: true },
     ],
   },
   {
@@ -57,7 +57,6 @@ const admin: NavItem[] = [
     path: "/admin/inventory",
   },
 ];
-
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();

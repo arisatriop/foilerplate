@@ -42,10 +42,6 @@ export default function User() {
     fetchUsers(itemsPerPage, offset, searchTerm);
   }, [currentPage]);
 
-  useEffect(() => {
-    console.log("isDeleting changed:", isDeleting);
-  }, [isDeleting]);
-
   async function fetchUsers(limit, offset, searchTerm) {
     try {
       setIsLoading(true);
