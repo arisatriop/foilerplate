@@ -3,55 +3,71 @@ import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 
 // Komponen untuk fetch & render SVG dengan support warna dinamis
-const SvgIcon: React.FC<{
-  url: string;
+const DEFAULT_ICON_DATA_URI =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXJlZnJlc2gtY3ctb2ZmLWljb24gbHVjaWRlLXJlZnJlc2gtY3ctb2ZmIj48cGF0aCBkPSJNMjEgOEwxOC43NCA1Ljc0QTkuNzUgOS43NSAwIDAgMCAxMiAzQzExIDMgMTAuMDMgMy4xNiA5LjEzIDMuNDciLz48cGF0aCBkPSJNOCAxNkgzdjUiLz48cGF0aCBkPSJNMyAxMkMzIDkuNTEgNCA3LjI2IDUuNjQgNS42NCIvPjxwYXRoIGQ9Im0zIDE2IDIuMjYgMi4yNkE5Ljc1IDkuNzUgMCAwIDAgMTIgMjFjMi40OSAwIDQuNzQtMSA2LjM2LTIuNjQiLz48cGF0aCBkPSJNMjEgMTJjMCAxLS4xNiAxLjk3LS40NyAyLjg3Ii8+PHBhdGggZD0iTTIxIDN2NWgtNSIvPjxwYXRoIGQ9Ik0yMiAyMiAyIDIiLz48L3N2Zz4=";
+
+type SvgIconProps = {
+  url?: string;
   className?: string;
+  isActive?: boolean;
   colorClass?: string;
-}> = ({ url, className = "w-5 h-5", colorClass = "text-gray-500" }) => {
+};
+
+const SvgIcon: React.FC<SvgIconProps> = ({ url, className = "", isActive }) => {
   const [svg, setSvg] = useState<string | null>(null);
-  const [hasError, setHasError] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (!url) {
+      setError(true);
+      return;
+    }
+
+    let canceled = false;
+
     fetch(url)
       .then((res) => {
-        if (
-          !res.ok ||
-          !res.headers.get("content-type")?.includes("image/svg")
-        ) {
-          throw new Error("Not a valid SVG");
-        }
+        if (!res.ok) throw new Error("Fetch failed");
         return res.text();
       })
       .then((data) => {
-        const sanitized = data.replace(/fill="[^"]*"/g, 'fill="currentColor"');
-        setSvg(sanitized);
+        if (!canceled) {
+          const sanitized = data
+            .replace(/fill="[^"]*"/g, 'fill="currentColor"')
+            .replace(/(width|height)="[^"]*"/g, "");
+          setSvg(sanitized);
+        }
       })
       .catch(() => {
-        setHasError(true);
+        if (!canceled) setError(true);
       });
+
+    return () => {
+      canceled = true;
+    };
   }, [url]);
 
-  if (hasError) {
+  const colorClass = isActive
+    ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-500"
+    : "hover:bg-black/5 dark:hover:bg-white/5 text-gray-900 dark:text-white";
+
+  if (error || !url) {
     return (
-      <div className={`w-5 h-5 ${colorClass}`}>
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="12" r="10" />
-        </svg>
-      </div>
+      <img
+        src={DEFAULT_ICON_DATA_URI}
+        alt="default icon"
+        className={`w-4 h-4 ${colorClass} ${className}`}
+      />
     );
   }
 
-  return svg ? (
+  if (!svg) return null;
+
+  return (
     <div
-      className={`${className} ${colorClass}`}
+      className={`w-4 h-4 ${colorClass} ${className}`}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
-  ) : (
-    <div className={`w-5 h-5 animate-pulse ${colorClass}`}>
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="12" r="10" />
-      </svg>
-    </div>
   );
 };
 
@@ -76,13 +92,13 @@ const Menus: MenuGroup[] = [
       {
         name: "Dashboard",
         iconUrl:
-          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXJlZnJlc2gtY3ctb2ZmLWljb24gbHVjaWRlLXJlZnJlc2gtY3ctb2ZmIj48cGF0aCBkPSJNMjEgOEwxOC43NCA1Ljc0QTkuNzUgOS43NSAwIDAgMCAxMiAzQzExIDMgMTAuMDMgMy4xNiA5LjEzIDMuNDciLz48cGF0aCBkPSJNOCAxNkgzdjUiLz48cGF0aCBkPSJNMyAxMkMzIDkuNTEgNCA3LjI2IDUuNjQgNS42NCIvPjxwYXRoIGQ9Im0zIDE2IDIuMjYgMi4yNkE5Ljc1IDkuNzUgMCAwIDAgMTIgMjFjMi40OSAwIDQuNzQtMSA2LjM2LTIuNjQiLz48cGF0aCBkPSJNMjEgMTJjMCAxLS4xNiAxLjk3LS40NyAyLjg3Ii8+PHBhdGggZD0iTTIxIDN2NWgtNSIvPjxwYXRoIGQ9Ik0yMiAyMiAyIDIiLz48L3N2Zz4=",
+          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcGxlLWljb24gbHVjaWRlLWFwcGxlIj48cGF0aCBkPSJNMTIgMjAuOTRjMS41IDAgMi43NSAxLjA2IDQgMS4wNiAzIDAgNi04IDYtMTIuMjJBNC45MSA0LjkxIDAgMCAwIDE3IDVjLTIuMjIgMC00IDEuNDQtNSAyLTEtLjU2LTIuNzgtMi01LTJhNC45IDQuOSAwIDAgMC01IDQuNzhDMiAxNCA1IDIyIDggMjJjMS4yNSAwIDIuNS0xLjA2IDQtMS4wNloiLz48cGF0aCBkPSJNMTAgMmMxIC41IDIgMiAyIDUiLz48L3N2Zz4=",
         path: "/",
       },
       {
         name: "Manage",
         iconUrl:
-          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXJlZnJlc2gtY3ctb2ZmLWljb24gbHVjaWRlLXJlZnJlc2gtY3ctb2ZmIj48cGF0aCBkPSJNMjEgOEwxOC43NCA1Ljc0QTkuNzUgOS43NSAwIDAgMCAxMiAzQzExIDMgMTAuMDMgMy4xNiA5LjEzIDMuNDciLz48cGF0aCBkPSJNOCAxNkgzdjUiLz48cGF0aCBkPSJNMyAxMkMzIDkuNTEgNCA3LjI2IDUuNjQgNS42NCIvPjxwYXRoIGQ9Im0zIDE2IDIuMjYgMi4yNkE5Ljc1IDkuNzUgMCAwIDAgMTIgMjFjMi40OSAwIDQuNzQtMSA2LjM2LTIuNjQiLz48cGF0aCBkPSJNMjEgMTJjMCAxLS4xNiAxLjk3LS40NyAyLjg3Ii8+PHBhdGggZD0iTTIxIDN2NWgtNSIvPjxwYXRoIGQ9Ik0yMiAyMiAyIDIiLz48L3N2Zz4=",
+          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcGxlLWljb24gbHVjaWRlLWFwcGxlIj48cGF0aCBkPSJNMTIgMjAuOTRjMS41IDAgMi43NSAxLjA2IDQgMS4wNiAzIDAgNi04IDYtMTIuMjJBNC45MSA0LjkxIDAgMCAwIDE3IDVjLTIuMjIgMC00IDEuNDQtNSAyLTEtLjU2LTIuNzgtMi01LTJhNC45IDQuOSAwIDAgMC01IDQuNzhDMiAxNCA1IDIyIDggMjJjMS4yNSAwIDIuNS0xLjA2IDQtMS4wNloiLz48cGF0aCBkPSJNMTAgMmMxIC41IDIgMiAyIDUiLz48L3N2Zz4=",
         children: [
           {
             name: "User",
@@ -93,7 +109,7 @@ const Menus: MenuGroup[] = [
           {
             name: "Role",
             iconUrl:
-              "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXJlZnJlc2gtY3ctb2ZmLWljb24gbHVjaWRlLXJlZnJlc2gtY3ctb2ZmIj48cGF0aCBkPSJNMjEgOEwxOC43NCA1Ljc0QTkuNzUgOS43NSAwIDAgMCAxMiAzQzExIDMgMTAuMDMgMy4xNiA5LjEzIDMuNDciLz48cGF0aCBkPSJNOCAxNkgzdjUiLz48cGF0aCBkPSJNMyAxMkMzIDkuNTEgNCA3LjI2IDUuNjQgNS42NCIvPjxwYXRoIGQ9Im0zIDE2IDIuMjYgMi4yNkE5Ljc1IDkuNzUgMCAwIDAgMTIgMjFjMi40OSAwIDQuNzQtMSA2LjM2LTIuNjQiLz48cGF0aCBkPSJNMjEgMTJjMCAxLS4xNiAxLjk3LS40NyAyLjg3Ii8+PHBhdGggZD0iTTIxIDN2NWgtNSIvPjxwYXRoIGQ9Ik0yMiAyMiAyIDIiLz48L3N2Zz4=",
+              "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFwcGxlLWljb24gbHVjaWRlLWFwcGxlIj48cGF0aCBkPSJNMTIgMjAuOTRjMS41IDAgMi43NSAxLjA2IDQgMS4wNiAzIDAgNi04IDYtMTIuMjJBNC45MSA0LjkxIDAgMCAwIDE3IDVjLTIuMjIgMC00IDEuNDQtNSAyLTEtLjU2LTIuNzgtMi01LTJhNC45IDQuOSAwIDAgMC01IDQuNzhDMiAxNCA1IDIyIDggMjJjMS4yNSAwIDIuNS0xLjA2IDQtMS4wNloiLz48cGF0aCBkPSJNMTAgMmMxIC41IDIgMiAyIDUiLz48L3N2Zz4=",
             path: "/manage/role",
           },
           {
