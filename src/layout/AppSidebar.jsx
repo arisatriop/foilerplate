@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 
-const DefaultIcon = ({ className }: { className: string }) => (
+const DefaultIcon = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className={className}
@@ -18,12 +18,8 @@ const DefaultIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
-const SvgIcon: React.FC<{
-  url?: string;
-  className?: string;
-  isActive?: boolean;
-}> = ({ url, className = "", isActive }) => {
-  const [svgHtml, setSvgHtml] = useState<string | null>(null);
+const SvgIcon = ({ url, className = "", isActive }) => {
+  const [svgHtml, setSvgHtml] = useState(null);
   const [error, setError] = useState(false);
 
   const colorClass = isActive
@@ -32,7 +28,7 @@ const SvgIcon: React.FC<{
 
   const wrapperClass = `w-4 h-4 ${colorClass} ${className}`;
 
-  const sanitizeSvg = (raw: string): string => {
+  const sanitizeSvg = (raw) => {
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(raw, "image/svg+xml");
@@ -118,27 +114,28 @@ const SvgIcon: React.FC<{
   );
 };
 
-const AppSidebar: React.FC = () => {
+const AppSidebar = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [openMenus, setOpenMenus] = useState({});
+  const [menu, setMenu] = useState([]);
 
   const isActive = useCallback(
-    (path: string) => location.pathname === path,
+    (path) => location.pathname === path,
     [location.pathname]
   );
 
-  const isAnyChildActive = (children?: any[]): boolean => {
+  const isAnyChildActive = (children) => {
     return !!children?.some(
       (c) => c.path === location.pathname || isAnyChildActive(c.children)
     );
   };
 
-  const toggleMenu = (name: string) => {
+  const toggleMenu = (name) => {
     setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const renderRecursive = (items: any[], level = 0) => (
+  const renderRecursive = (items, level = 0) => (
     <ul className={level === 0 ? "space-y-2" : "ml-4 mt-2 space-y-1"}>
       {items.map((item) => {
         const hasChildren = item.children?.length;
@@ -204,9 +201,7 @@ const AppSidebar: React.FC = () => {
                 </Link>
               )
             )}
-            {hasChildren &&
-              isOpen &&
-              renderRecursive(item.children!, level + 1)}
+            {hasChildren && isOpen && renderRecursive(item.children, level + 1)}
           </li>
         );
       })}
