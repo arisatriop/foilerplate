@@ -1,8 +1,6 @@
 import { Link } from "react-router";
-import PageMeta from "../../components/common/PageMeta";
-import UserMetaCard from "../../components/manage/UserMetaCard";
-import UserTabGroup from "../../components/manage/UserTabGroup";
-import { FaArrowLeft } from "react-icons/fa";
+import PageMeta from "../../../components/common/PageMeta";
+import UserTabGroup from "../../../components/manage/user/UserTabGroup";
 
 export default function UserDetailLayout() {
   return (

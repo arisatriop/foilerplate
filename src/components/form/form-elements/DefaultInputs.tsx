@@ -1,3 +1,4 @@
+// @ts-ignore
 import { useState } from "react";
 import ComponentCard from "../../common/ComponentCard";
 import Label from "../Label";

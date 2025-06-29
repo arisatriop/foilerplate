@@ -18,12 +18,12 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
-import User from "./pages/Manage/UserLayout";
-import Menu from "./pages/Manage/Menu";
-import Role from "./pages/Manage/Role";
+import UserLayput from "./pages/Manage/User/UserLayout";
+import MenuLayout from "./pages/Manage/Menu/MenuLayot";
+import RoleLayout from "./pages/Manage/Role/RoleLayout";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import UserDetailLayout from "./pages/Manage/UserDetailLayout";
+import UserDetailLayout from "./pages/Manage/User/UserDetailLayout";
 
 export default function App() {
   return (
@@ -34,10 +34,10 @@ export default function App() {
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
-            <Route path="/manage/user" element={<User />} />
+            <Route path="/manage/user" element={<UserLayput />} />
             <Route path="/manage/user/detail" element={<UserDetailLayout />} />
-            <Route path="/manage/menu" element={<Menu />} />
-            <Route path="/manage/role" element={<Role />} />
+            <Route path="/manage/menu" element={<MenuLayout />} />
+            <Route path="/manage/role" element={<RoleLayout />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { currentUser } from "../lib/api/AuthApi";
@@ -30,6 +30,7 @@ const SvgIcon = ({ url, className = "", isActive }) => {
 
   const wrapperClass = `w-4 h-4 ${colorClass} ${className}`;
 
+  // @ts-ignore
   const sanitizeSvg = (raw) => {
     try {
       const parser = new DOMParser();
@@ -78,6 +79,7 @@ const SvgIcon = ({ url, className = "", isActive }) => {
     }
 
     if (url.trim().startsWith("<svg")) {
+      // @ts-ignore
       setSvgHtml(sanitizeSvg(url));
       return;
     }
@@ -92,6 +94,7 @@ const SvgIcon = ({ url, className = "", isActive }) => {
       .then((text) => {
         if (!canceled) {
           const sanitized = sanitizeSvg(text);
+          // @ts-ignore
           setSvgHtml(sanitized || null);
         }
       })
@@ -123,35 +126,47 @@ const AppSidebar = () => {
   const [menu, setMenu] = useState([]);
 
   const isActive = useCallback(
+    // @ts-ignore
     (path) => location.pathname === path,
     [location.pathname]
   );
 
+  // @ts-ignore
   const isAnyChildActive = (children) => {
     return !!children?.some(
+      // @ts-ignore
       (c) => c.path === location.pathname || isAnyChildActive(c.children)
     );
   };
 
+  // @ts-ignore
   const toggleMenu = (name) => {
+    // @ts-ignore
     setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  // @ts-ignore
   const renderRecursive = (items, level = 0) => (
     <ul className={level === 0 ? "space-y-2" : "ml-4 mt-2 space-y-1"}>
-      {items.map((item) => {
-        const hasChildren = Array.isArray(item.child) && item.child.length > 0;
-        const isOpen = openMenus[item.name];
-        const active = item.path
-          ? isActive(item.path)
-          : isAnyChildActive(item.child);
+      {items.map(
+        (
+          // @ts-ignore
+          item
+        ) => {
+          const hasChildren =
+            Array.isArray(item.child) && item.child.length > 0;
+          // @ts-ignore
+          const isOpen = openMenus[item.name];
+          const active = item.path
+            ? isActive(item.path)
+            : isAnyChildActive(item.child);
 
-        return (
-          <li key={item.name}>
-            {hasChildren ? (
-              <button
-                onClick={() => toggleMenu(item.name)}
-                className={`flex items-center gap-3 px-4 py-2 rounded-xl w-full text-left transition-colors
+          return (
+            <li key={item.name}>
+              {hasChildren ? (
+                <button
+                  onClick={() => toggleMenu(item.name)}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-xl w-full text-left transition-colors
                   ${
                     active
                       ? "dark:bg-[#1F254A] bg-gray-100 text-indigo-500"
@@ -162,51 +177,52 @@ const AppSidebar = () => {
                       ? "lg:justify-center"
                       : "lg:justify-start"
                   }`}
-              >
-                <SvgIcon url={item.icon} isActive={active} />
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <>
-                    <span className="text-sm font-medium">{item.name}</span>
-                    <svg
-                      className={`ml-auto w-4 h-4 transition-transform ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M19 9l-7 7-7-7"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </>
-                )}
-              </button>
-            ) : (
-              item.path && (
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-colors
+                >
+                  <SvgIcon url={item.icon} isActive={active} />
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <>
+                      <span className="text-sm font-medium">{item.name}</span>
+                      <svg
+                        className={`ml-auto w-4 h-4 transition-transform ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          d="M19 9l-7 7-7-7"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              ) : (
+                item.path && (
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-colors
                     ${
                       active
                         ? "dark:bg-[#1F254A] bg-gray-100 text-indigo-500"
                         : "hover:bg-black/5 dark:hover:bg-white/5 text-gray-900 dark:text-white"
                     }`}
-                >
-                  <SvgIcon url={item.icon} isActive={active} />
-                  {(isExpanded || isHovered || isMobileOpen) && (
-                    <span className="text-sm font-medium">{item.name}</span>
-                  )}
-                </Link>
-              )
-            )}
-            {hasChildren && isOpen && renderRecursive(item.child, level + 1)}
-          </li>
-        );
-      })}
+                  >
+                    <SvgIcon url={item.icon} isActive={active} />
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="text-sm font-medium">{item.name}</span>
+                    )}
+                  </Link>
+                )
+              )}
+              {hasChildren && isOpen && renderRecursive(item.child, level + 1)}
+            </li>
+          );
+        }
+      )}
     </ul>
   );
 
@@ -223,86 +239,6 @@ const AppSidebar = () => {
   useEffect(() => {
     fetchCurrentUser();
   }, []);
-
-  const Menus = [
-    {
-      title: "SUPER ADMIN",
-      items: [
-        {
-          name: "Dashboard",
-          iconUrl: "",
-          path: "/",
-        },
-        {
-          name: "Manage",
-          iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-          children: [
-            {
-              name: "User",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
-</svg>
-`,
-              path: "/manage/user",
-            },
-            {
-              name: "Role",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40L64 64C28.7 64 0 92.7 0 128l0 16 0 48L0 448c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-256 0-48 0-16c0-35.3-28.7-64-64-64l-40 0 0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40L152 64l0-40zM48 192l352 0 0 256c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256z"/></svg>`,
-              path: "/manage/role",
-            },
-            {
-              name: "Menu",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0503 12.0498L21 16.9996L16.0503 21.9493L14.636 20.5351L17.172 17.9988L4 17.9996V15.9996L17.172 15.9988L14.636 13.464L16.0503 12.0498ZM7.94975 2.0498L9.36396 3.46402L6.828 5.9988L20 5.99955V7.99955L6.828 7.9988L9.36396 10.5351L7.94975 11.9493L3 6.99955L7.94975 2.0498Z"></path></svg>`,
-              path: "/manage/menu",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: "OWNER",
-      items: [
-        {
-          name: "Manage",
-          iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-          children: [
-            {
-              name: "User",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-              path: "/manage/user",
-            },
-            {
-              name: "Role",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-              path: "/manage/role",
-              children: [
-                {
-                  name: "User",
-                  iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-                  path: "/manage/user",
-                },
-                {
-                  name: "Role",
-                  iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-                  path: "/manage/role",
-                },
-                {
-                  name: "Menu",
-                  iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-                  path: "/manage/menu",
-                },
-              ],
-            },
-            {
-              name: "Menu",
-              iconUrl: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-apple-icon lucide-apple"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>`,
-              path: "/manage/menu",
-            },
-          ],
-        },
-      ],
-    },
-  ];
 
   return (
     <aside
@@ -360,7 +296,12 @@ const AppSidebar = () => {
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col gap-6">
           {menu.map((group) => (
-            <div key={group.name}>
+            <div
+              key={
+                // @ts-ignore
+                group.name
+              }
+            >
               <h2
                 className={`mb-2 text-xs uppercase text-gray-400 dark:text-gray-500 ${
                   !isExpanded && !isHovered
@@ -368,9 +309,15 @@ const AppSidebar = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? group.name : "⋯"}
+                {isExpanded || isHovered || isMobileOpen
+                  ? // @ts-ignore
+                    group.name
+                  : "⋯"}
               </h2>
-              {renderRecursive(group.menu)}
+              {renderRecursive(
+                // @ts-ignore
+                group.menu
+              )}
             </div>
           ))}
         </nav>

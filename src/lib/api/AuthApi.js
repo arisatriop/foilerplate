@@ -1,5 +1,4 @@
-import { Navigate } from "react-router";
-
+// @ts-ignore
 export const authLogin = async (axiosInstance, { email, password }) => {
   const path = `/auth/login`;
 
@@ -9,6 +8,7 @@ export const authLogin = async (axiosInstance, { email, password }) => {
   });
 };
 
+// @ts-ignore
 export const authLogout = async (axiosInstance, accessToken) => {
   const path = `/auth/logout`;
   console.log("authLogout called with accessToken:", accessToken);
@@ -23,6 +23,7 @@ export const authLogout = async (axiosInstance, accessToken) => {
   );
 };
 
+// @ts-ignore
 export const authToken = async (axiosInstance, refreshToken) => {
   const path = `/auth/token`;
   return await axiosInstance.post(
@@ -34,6 +35,7 @@ export const authToken = async (axiosInstance, refreshToken) => {
   );
 };
 
+// @ts-ignore
 export const currentUser = async (axiosInstance, accessToken) => {
   return axiosInstance.get("/auth", {
     headers: {
