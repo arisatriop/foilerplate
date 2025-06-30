@@ -11,13 +11,13 @@ import {
   TableBody,
 } from "../../ui/table";
 import { MdDeleteForever } from "react-icons/md";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { FaEye } from "react-icons/fa";
 import { roleDelete, roleList } from "../../../lib/api/RoleApi";
 
 export default function Role() {
+  const navigate = useNavigate();
   const itemsPerPage = 5;
-
   const [roles, setRoles] = useState([]);
   const [totalItem, setTotalItem] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +26,6 @@ export default function Role() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState(null);
-
   const totalPages = Math.ceil(totalItem / itemsPerPage);
 
   useEffect(() => {
@@ -281,7 +280,10 @@ export default function Role() {
           className="w-full max-w-xs px-3 py-2 border rounded-md text-sm text-gray-800 dark:text-white bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
         />
         <button
-          onClick={() => alert("Create new resource clicked")}
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/manage/role/create");
+          }}
           className="ml-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
           + Add

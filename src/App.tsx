@@ -21,6 +21,7 @@ import Home from "./pages/Dashboard/Home";
 import UserLayput from "./pages/Manage/User/UserLayout";
 import MenuLayout from "./pages/Manage/Menu/MenuLayot";
 import RoleLayout from "./pages/Manage/Role/RoleLayout";
+import RoleCreateLayout from "./pages/Manage/Role/RoleCreateLayout";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UserDetailLayout from "./pages/Manage/User/UserDetailLayout";
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/manage/user/detail" element={<UserDetailLayout />} />
             <Route path="/manage/menu" element={<MenuLayout />} />
             <Route path="/manage/role" element={<RoleLayout />} />
+            <Route path="/manage/role/create" element={<RoleCreateLayout />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
