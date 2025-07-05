@@ -19,3 +19,11 @@ export const roleDelete = async (axiosInstance, accessToken, id) => {
     },
   });
 };
+
+export const roleCreate = async (axiosInstance, accessToken, data) => {
+  return await axiosInstance.post(`/manage/roles`, data, {
+    headers: {
+      Authorization: accessToken,
+    },
+  });
+};

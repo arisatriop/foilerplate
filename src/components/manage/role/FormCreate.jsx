@@ -6,10 +6,12 @@ import { menuList } from "../../../lib/api/MenuApi";
 import { axiosGoilerplateInstance } from "../../../lib/axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
+import { roleCreate } from "../../../lib/api/RoleApi";
 
 export default function FormCreate() {
   const [menus, setMenus] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [roleName, setRoleName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -43,78 +45,115 @@ export default function FormCreate() {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      console.log("Send to backend:", selectedPermissions);
-      // await saveRole({ permissionIds: selectedPermissions })
-      toast.success("Role saved successfully!");
+      const response = await roleCreate(
+        axiosGoilerplateInstance,
+        localStorage.getItem("accessToken"),
+        {
+          name: roleName,
+          permission: selectedPermissions,
+        }
+      );
+      toast.success(response?.data?.message || "Role created successfully");
       navigate("/manage/role");
     } catch (error) {
       console.log("error saving role:", error);
-      const message =
-        error?.response?.data?.message || "Whoops! Something went wrong.";
-      toast.error(message);
+      if (error.response?.status >= 500) {
+        toast.error(
+          error?.response?.data?.message || "Whoops! Something went wrong."
+        );
+        return;
+      }
+      if (error.response?.status >= 400) {
+        toast.error(error?.response?.data?.message || "Invalid input");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form
-      className="space-y-4 pt-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit();
-      }}
-    >
-      {menus.map((menu) => (
-        <AccordionItem
-          key={menu.id}
-          menu={menu}
-          selectedPermissions={selectedPermissions}
-          togglePermission={togglePermission}
-        />
-      ))}
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-6 max-w-3xl mx-auto mt-8">
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
+        {/* Input nama role */}
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="role-name"
+            className="text-sm font-medium text-gray-700 dark:text-white"
+          >
+            Role Name
+          </label>
+          <input
+            id="role-name"
+            type="text"
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+            placeholder="Enter role name"
+            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-200 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+            required
+          />
+        </div>
 
-      <div className="flex gap-4 justify-center py-6">
-        <button
-          type="button"
-          onClick={() => navigate("/manage/role")}
-          className="w-60 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm hover:bg-gray-200 dark:text-white dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20 whitespace-nowrap"
-        >
-          ← Back to Role Management
-        </button>
+        <p className="text-sm font-semibold text-gray-700 dark:text-white pt-4">
+          Role Permissions
+        </p>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-60 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-700 rounded-md shadow-sm hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <svg
-              className="w-4 h-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8H4z"
-              ></path>
-            </svg>
-          ) : (
-            <FiSave className="w-4 h-4" />
-          )}
-          Confirm and Save
-        </button>
-      </div>
-    </form>
+        {menus.map((menu) => (
+          <AccordionItem
+            key={menu.id}
+            menu={menu}
+            selectedPermissions={selectedPermissions}
+            togglePermission={togglePermission}
+          />
+        ))}
+
+        <div className="flex gap-4 justify-center py-6">
+          <button
+            type="button"
+            onClick={() => navigate("/manage/role")}
+            className="w-60 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm hover:bg-gray-200 dark:text-white dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20 whitespace-nowrap"
+          >
+            ← Back to Role Management
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-60 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-700 rounded-md shadow-sm hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <svg
+                className="w-4 h-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+            ) : (
+              <FiSave className="w-4 h-4" />
+            )}
+            Confirm and Save
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
